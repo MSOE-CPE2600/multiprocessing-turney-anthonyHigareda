@@ -160,7 +160,7 @@ Modify this function to make more interesting colors.
 */
 int iteration_to_color( int iters, int max )
 {
-	int color = 0xFFFFFF*iters/(double)max;
+	int color = 0xFEFDEF*iters/(double)max;
 	return color;
 }
 
