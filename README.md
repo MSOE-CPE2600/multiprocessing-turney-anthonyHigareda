@@ -8,3 +8,6 @@ To handle the logic for the child processes, I initialized an integer variable `
 
 ## Runtime graph for differring number of child processes
 ![Graph showing the runtime of this program for 1, 2, 5, 10, and 20 child processes](child_vs_runtime.png)
+
+## Discussion
+The results show that, by adding more child processes, you can greatly reduce the runtime of a program. By multiplying the number of processes by 2, the runtime can be cut by almost half. As the number of processes increase, however, the amount of gains does reach a limit. This can be dictated by the hardware. For instance, on a device with a 12-core CPU, the maximum amount of processes that can be executed at once, is 12. More processes can be created, but they will need to be switched in and out from the active threads and this will not significantly reduce the runtime. 
