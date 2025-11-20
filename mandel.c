@@ -1,4 +1,10 @@
 /// 
+//  CPE 2600 - 131
+// 	Dr. Turney
+//	Fall 2025
+//  Lab 11: Multiprocessing
+//	Modified by: Anthony Higareda
+//
 //  mandel.c
 //  Based on example code found here:
 //  https://users.cs.fiu.edu/~cpoellab/teaching/cop4610_fall22/project3.html
