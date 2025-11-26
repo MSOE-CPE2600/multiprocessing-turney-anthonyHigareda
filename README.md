@@ -2,6 +2,8 @@
 ## Anthony Higareda
 ### 19 November 2025
 
+#### [Repository Link Here](https://github.com/MSOE-CPE2600/multiprocessing-turney-anthonyHigareda)
+
 ## Implementation
 For this lab, I experimented with various different values for the X and Y centers and Scale parameters until I found a final frame that I liked. I recorded those parameters and created `const double` variables for each of those parameters. Then I created 3 arrays to hold 50 doubles for each set of parameters for each frame. I set the values at index 0 to the starting parameters, then used logic to gradually move into the final values. By finding the distance between the goal and the previous step and dividing that by 2 for the X and Y centers and 1.8 for the scale, I was able to approach the "ideal" frame and slow down the adjustment as the scene approached it.<br>
 To handle the logic for the child processes, I initialized an integer variable `num_active_processes` to 0, then entered a `for` loop that would execute once for every frame. At the beginning of the loop, if there were the same or more active processes than had been specified by the `-p` argument from the command line, then the process that reached it would wait until it's child would finish, then decrement the number of active processes. Next, a `fork()` would be executed. The child process from that fork would create the frame for the current iteration. The parent process would increment the number of active processes, and head into the next loop. After all 50 frames have begun their creation, the parent processes would exit the loop and enter a while loop. This loop waits for all remaining children to finish. After all children have finished, the buffer for the output filename is freed, and the program exits.
