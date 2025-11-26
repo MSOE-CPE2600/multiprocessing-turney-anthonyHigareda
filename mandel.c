@@ -34,13 +34,15 @@ static void show_help();
 typedef struct thread_slice
 {
 	imgRawImage *img;
-	double thread_xmin;
-	double thread_xmax;
+	double xmin;
+	double xmax;
 	double ymin;
 	double ymax;
 	int max;
-	int thread_width;
+	int width;
 	int height;
+	int height_start;
+	int height_end;
 } thread_slice;
 
 int main( int argc, char *argv[] )
@@ -209,28 +211,57 @@ Scale the image to the range (xmin-xmax,ymin-ymax), limiting iterations to "max"
 
 void compute_image(imgRawImage* img, double xmin, double xmax, double ymin, double ymax, int max, int threads)
 {
-	int thread_width = img->width / threads;
-	int height = img->height;
-
-	pthread_t pthreads[threads];
-
-	for (int t = 0; t < threads; t++)
+	// If the number of threads is left to default (t = 1) or specified to be nonzero:
+	if (threads > 0)
 	{
-		thread_slice slice;
-		slice.img = img;
-		slice.thread_xmin = thread_width * t;
-		slice.thread_xmax = thread_width * (t + 1);
-		slice.ymin = ymin;
-		slice.ymax = ymax;
-		slice.max = max;
-		slice.thread_width = thread_width;
-		slice.height = height;
+		int width = img->width;
+		int height = img->height;
 
-		pthread_create(&pthreads[t], NULL, &create_img_slice, (void*)&slice);
+		pthread_t *pthreads = malloc(sizeof(pthread_t) * threads);
+		thread_slice *slices = malloc(sizeof(thread_slice) * threads);
+
+		for (int t = 0; t < threads; t++)
+		{
+			slices[t].img = img;
+			slices[t].xmin = xmin;
+			slices[t].xmax = xmax;
+			slices[t].ymin = ymin;
+			slices[t].ymax = ymax;
+			slices[t].max = max;
+			slices[t].width = width;
+			slices[t].height = height;
+			slices[t].height_start = height / threads * t;
+			slices[t].height_end = slices[t].height_start  + (height / threads);
+
+			pthread_create(&pthreads[t], NULL, &create_img_slice, (void*)&slices[t]);
+		}
+		for (int t = 0; t < threads; t++)
+		{
+			pthread_join(pthreads[t], NULL);
+		}
+		free(pthreads);
+		free(slices);
 	}
-	for (int t = 0; t < threads; t++)
+	else // the number of threads was specified to be zero (t = 0)
 	{
-		pthread_join(pthreads[t], NULL);
+		int width = img->width;
+		int height = img->height;
+
+		int i, j;
+		for(j=0;j<height;j++) {
+			for(i=0;i<width;i++) {
+
+				// Determine the point in x,y space for that pixel.
+				double x = xmin + i*(xmax-xmin)/width;
+				double y = ymin + j*(ymax-ymin)/height;
+
+				// Compute the iterations at that point.
+				int iters = iterations_at_point(x,y,max);
+
+				// Set the pixel in the bitmap.
+				setPixelCOLOR(img,i,j,iteration_to_color(iters,max));
+			}
+		}
 	}
 }
 
@@ -239,13 +270,13 @@ static void* create_img_slice(void* arg)
 		// For every pixel in the image...
 	thread_slice *slice = (thread_slice*)arg;
 
-	for(int j=0;j<slice -> height;j++) {
+	for(int j = slice -> height_start; j < slice -> height_end; j++) {
 
-		for(int i=0;i<slice -> thread_width;i++) {
+		for(int i = 0; i < slice -> width; i++) {
 
 			// Determine the point in x,y space for that pixel.
-			double x = slice -> thread_xmin + i*(slice -> thread_xmax-slice -> thread_xmin)/slice -> thread_width;
-			double y = slice -> ymin + j*(slice -> ymax-slice -> ymin)/slice -> height;
+			double x = slice -> xmin + i*(slice -> xmax - slice -> xmin)/slice -> width;
+			double y = slice -> ymin + j*(slice -> ymax - slice -> ymin)/slice -> height;
 
 			// Compute the iterations at that point.
 			int iters = iterations_at_point(x,y,slice -> max);
